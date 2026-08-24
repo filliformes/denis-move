@@ -1268,9 +1268,54 @@ static void randomize_all(serge_instance_t *inst) {
     randomize_matrix(inst);
 }
 
+/* Snapshot only durable controls. The four randomize/reset parameters are
+ * actions; replaying them during set restore would mutate the saved sound. */
+static const char *const state_keys[] = {
+    "preset", "osc1_freq", "osc1_timbre", "osc2_pitch", "osc2_harmonics",
+    "osc_mix", "fold_depth", "fold_type", "filter_cutoff", "filter_q",
+    "filter_type", "vel_to_filter", "attack", "decay", "sustain", "release",
+    "noise_mix", "noise_type", "lfo_rate", "sh_rate", "mod_depth_env",
+    "mod_depth_noise", "portamento", "legato", "patch_mode",
+    "mat_0_0", "mat_0_1", "mat_0_2", "mat_0_3", "mat_0_4", "mat_0_5", "mat_0_6", "mat_0_7",
+    "mat_1_0", "mat_1_1", "mat_1_2", "mat_1_3", "mat_1_4", "mat_1_5", "mat_1_6", "mat_1_7",
+    "mat_2_0", "mat_2_1", "mat_2_2", "mat_2_3", "mat_2_4", "mat_2_5", "mat_2_6", "mat_2_7",
+    "mat_3_0", "mat_3_1", "mat_3_2", "mat_3_3", "mat_3_4", "mat_3_5", "mat_3_6", "mat_3_7"
+};
+#define STATE_KEY_COUNT ((int)(sizeof(state_keys) / sizeof(state_keys[0])))
+
+static int get_param(void *instance, const char *key, char *buf, int buf_len);
+static void set_param(void *instance, const char *key, const char *val);
+
+static int state_read_string(const char *json, const char *key,
+                             char *out, int out_len) {
+    char needle[64];
+    int needle_len = snprintf(needle, sizeof(needle), "\"%s\":\"", key);
+    if (!json || !key || !out || out_len <= 0 || needle_len <= 0 ||
+        needle_len >= (int)sizeof(needle)) return -1;
+    const char *start = strstr(json, needle);
+    if (!start) return -1;
+    start += needle_len;
+    const char *end = strchr(start, '"');
+    if (!end || end == start || end - start >= out_len) return -1;
+    memcpy(out, start, (size_t)(end - start));
+    out[end - start] = '\0';
+    return (int)(end - start);
+}
+
 static void set_param(void *instance, const char *key, const char *val) {
     serge_instance_t *inst = (serge_instance_t *)instance;
     if (!inst || !key || !val) return;
+
+    if (strcmp(key, "state") == 0) {
+        char restored[64];
+        for (int i = 0; i < STATE_KEY_COUNT; i++) {
+            if (state_read_string(val, state_keys[i], restored,
+                                  (int)sizeof(restored)) > 0)
+                set_param(instance, state_keys[i], restored);
+        }
+        return;
+    }
+
     float f = (float)atof(val);
 
     /* Encoder params */
@@ -1401,6 +1446,25 @@ static void set_param(void *instance, const char *key, const char *val) {
 static int get_param(void *instance, const char *key, char *buf, int buf_len) {
     serge_instance_t *inst = (serge_instance_t *)instance;
     if (!inst || !key || !buf || buf_len < 1) return -1;
+
+    if (strcmp(key, "state") == 0) {
+        int used = snprintf(buf, (size_t)buf_len, "{\"v\":1");
+        if (used < 0 || used >= buf_len) return -1;
+        for (int i = 0; i < STATE_KEY_COUNT; i++) {
+            char value[64];
+            int value_len = get_param(instance, state_keys[i], value,
+                                      (int)sizeof(value));
+            if (value_len <= 0) return -1;
+            int wrote = snprintf(buf + used, (size_t)(buf_len - used),
+                                 ",\"%s\":\"%s\"", state_keys[i], value);
+            if (wrote < 0 || wrote >= buf_len - used) return -1;
+            used += wrote;
+        }
+        if (used + 2 > buf_len) return -1;
+        buf[used++] = '}';
+        buf[used] = '\0';
+        return used;
+    }
 
     if (strcmp(key, "name") == 0) {
         return snprintf(buf, buf_len, "Denis");
