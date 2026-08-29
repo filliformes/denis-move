@@ -28,42 +28,87 @@
             {"level": "Mat: LFO", "label": "Mat: LFO"},
             {"level": "Mat: S&H", "label": "Mat: S&H"},
             {"level": "Mat: Nz", "label": "Mat: Nz"}
-          ]
+          ,
+            { "key": "osc1_freq", "short_name": "Freq 1" },
+            { "key": "osc2_pitch", "short_name": "Freq 2" },
+            { "key": "osc_mix", "short_name": "Mix" }]
         },
         "Oscillators": {
           "label": "Oscillators",
           "knobs": ["osc1_freq", "osc1_timbre", "osc2_pitch", "osc2_harmonics", "osc_mix", "noise_mix", "noise_type", "filter_cutoff"],
-          "params": ["osc1_freq", "osc1_timbre", "osc2_pitch", "osc2_harmonics", "osc_mix", "noise_mix", "noise_type"]
+          "params": ["osc1_freq", "osc1_timbre", "osc2_pitch", "osc2_harmonics", "osc_mix", "noise_mix", "noise_type",
+        { "key": "osc1_freq", "short_name": "Freq 1" },
+        { "key": "osc2_pitch", "short_name": "Freq 2" },
+        { "key": "osc_mix", "short_name": "Mix" }]
         },
         "Control": {
           "label": "Control",
           "knobs": ["fold_depth", "fold_type", "filter_cutoff", "filter_q", "attack", "decay", "sustain", "release"],
-          "params": ["fold_depth", "fold_type", "filter_cutoff", "filter_q", "attack", "decay", "sustain", "release", "filter_type", "vel_to_filter"]
+          "params": ["fold_depth", "fold_type", "filter_cutoff", "filter_q", "attack", "decay", "sustain", "release", "filter_type", "vel_to_filter",
+        { "key": "fold_depth", "short_name": "Depth" },
+        { "key": "fold_type", "short_name": "Type" }]
         },
         "Mod & Patch": {
           "label": "Mod & Patch",
           "knobs": ["lfo_rate", "sh_rate", "mod_depth_env", "mod_depth_noise", "rnd_denis", "rnd_mod", "matrix_reset", "rnd_patch"],
-          "params": ["lfo_rate", "sh_rate", "mod_depth_env", "mod_depth_noise", "rnd_denis", "rnd_mod", "matrix_reset", "rnd_patch", "preset", "patch_mode", "portamento", "legato"]
+          "params": ["lfo_rate", "sh_rate", "mod_depth_env", "mod_depth_noise", "rnd_denis", "rnd_mod", "matrix_reset", "rnd_patch", "preset", "patch_mode", "portamento", "legato",
+        { "key": "lfo_rate", "short_name": "LFO" },
+        { "key": "sh_rate", "short_name": "S&H" },
+        { "key": "mod_depth_env", "short_name": "Env" },
+        { "key": "rnd_denis", "short_name": "Denis" },
+        { "key": "matrix_reset", "short_name": "Matrix" }]
         },
         "Mat: Env": {
           "label": "Mat: Env",
           "knobs": ["mat_0_0", "mat_0_1", "mat_0_2", "mat_0_3", "mat_0_4", "mat_0_5", "mat_0_6", "mat_0_7"],
-          "params": ["mat_0_0", "mat_0_1", "mat_0_2", "mat_0_3", "mat_0_4", "mat_0_5", "mat_0_6", "mat_0_7"]
+          "params": ["mat_0_0", "mat_0_1", "mat_0_2", "mat_0_3", "mat_0_4", "mat_0_5", "mat_0_6", "mat_0_7",
+        { "key": "mat_0_0", "short_name": "Pitch1" },
+        { "key": "mat_0_1", "short_name": "Timbre" },
+        { "key": "mat_0_2", "short_name": "Pitch2" },
+        { "key": "mat_0_3", "short_name": "Harm" },
+        { "key": "mat_0_4", "short_name": "Fold" },
+        { "key": "mat_0_5", "short_name": "FType" },
+        { "key": "mat_0_6", "short_name": "Cutof" },
+        { "key": "mat_0_7", "short_name": "Level" }]
         },
         "Mat: LFO": {
           "label": "Mat: LFO",
           "knobs": ["mat_1_0", "mat_1_1", "mat_1_2", "mat_1_3", "mat_1_4", "mat_1_5", "mat_1_6", "mat_1_7"],
-          "params": ["mat_1_0", "mat_1_1", "mat_1_2", "mat_1_3", "mat_1_4", "mat_1_5", "mat_1_6", "mat_1_7"]
+          "params": ["mat_1_0", "mat_1_1", "mat_1_2", "mat_1_3", "mat_1_4", "mat_1_5", "mat_1_6", "mat_1_7",
+        { "key": "mat_1_0", "short_name": "Pitch1" },
+        { "key": "mat_1_1", "short_name": "Timbre" },
+        { "key": "mat_1_2", "short_name": "Pitch2" },
+        { "key": "mat_1_3", "short_name": "Harm" },
+        { "key": "mat_1_4", "short_name": "Fold" },
+        { "key": "mat_1_5", "short_name": "FType" },
+        { "key": "mat_1_6", "short_name": "Cutof" },
+        { "key": "mat_1_7", "short_name": "Level" }]
         },
         "Mat: S&H": {
           "label": "Mat: S&H",
           "knobs": ["mat_2_0", "mat_2_1", "mat_2_2", "mat_2_3", "mat_2_4", "mat_2_5", "mat_2_6", "mat_2_7"],
-          "params": ["mat_2_0", "mat_2_1", "mat_2_2", "mat_2_3", "mat_2_4", "mat_2_5", "mat_2_6", "mat_2_7"]
+          "params": ["mat_2_0", "mat_2_1", "mat_2_2", "mat_2_3", "mat_2_4", "mat_2_5", "mat_2_6", "mat_2_7",
+        { "key": "mat_2_0", "short_name": "Pitch1" },
+        { "key": "mat_2_1", "short_name": "Timbre" },
+        { "key": "mat_2_2", "short_name": "Pitch2" },
+        { "key": "mat_2_3", "short_name": "Harm" },
+        { "key": "mat_2_4", "short_name": "Fold" },
+        { "key": "mat_2_5", "short_name": "FType" },
+        { "key": "mat_2_6", "short_name": "Cutof" },
+        { "key": "mat_2_7", "short_name": "Level" }]
         },
         "Mat: Nz": {
           "label": "Mat: Nz",
           "knobs": ["mat_3_0", "mat_3_1", "mat_3_2", "mat_3_3", "mat_3_4", "mat_3_5", "mat_3_6", "mat_3_7"],
-          "params": ["mat_3_0", "mat_3_1", "mat_3_2", "mat_3_3", "mat_3_4", "mat_3_5", "mat_3_6", "mat_3_7"]
+          "params": ["mat_3_0", "mat_3_1", "mat_3_2", "mat_3_3", "mat_3_4", "mat_3_5", "mat_3_6", "mat_3_7",
+        { "key": "mat_3_0", "short_name": "Pitch1" },
+        { "key": "mat_3_1", "short_name": "Timbre" },
+        { "key": "mat_3_2", "short_name": "Pitch2" },
+        { "key": "mat_3_3", "short_name": "Harm" },
+        { "key": "mat_3_4", "short_name": "Fold" },
+        { "key": "mat_3_5", "short_name": "FType" },
+        { "key": "mat_3_6", "short_name": "Cutof" },
+        { "key": "mat_3_7", "short_name": "Level" }]
         }
       }
     }
