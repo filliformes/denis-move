@@ -1268,10 +1268,89 @@ static void randomize_all(serge_instance_t *inst) {
     randomize_matrix(inst);
 }
 
+/* ── State persistence ───────────────────────────────────────────────────── */
+/* Schwung saves a module by calling get_param("state") and expects a JSON
+ * snapshot; it restores AFTER create_instance() via set_param("state", json).
+ * It does NOT pass saved state through create_instance(json_defaults).
+ * Every user-settable param must be listed here, or it silently resets to its
+ * default on every set reload (the "doesn't save modified states" bug).
+ *
+ * "preset" is listed FIRST and always applied FIRST on restore: setting it
+ * calls apply_preset() which overwrites the encoders, menu params, enums and
+ * the whole menu_matrix, so a saved patch that differs from its base preset
+ * would be clobbered unless every individual key is applied AFTER the preset. */
+
+static const char *STATE_KEYS[] = {
+    /* preset first (apply_preset overwrites everything below) */
+    "preset",
+    /* encoders (8) */
+    "osc1_freq","osc1_timbre","osc2_pitch","osc2_harmonics",
+    "fold_depth","fold_type","filter_cutoff","filter_q",
+    /* menu floats (12) */
+    "lfo_rate","sh_rate","attack","decay","sustain","release",
+    "osc_mix","noise_mix","mod_depth_env","mod_depth_noise",
+    "vel_to_filter","portamento",
+    /* enums (4) */
+    "noise_type","filter_type","legato","patch_mode",
+    /* modulation matrix (32) */
+    "mat_0_0","mat_0_1","mat_0_2","mat_0_3","mat_0_4","mat_0_5","mat_0_6","mat_0_7",
+    "mat_1_0","mat_1_1","mat_1_2","mat_1_3","mat_1_4","mat_1_5","mat_1_6","mat_1_7",
+    "mat_2_0","mat_2_1","mat_2_2","mat_2_3","mat_2_4","mat_2_5","mat_2_6","mat_2_7",
+    "mat_3_0","mat_3_1","mat_3_2","mat_3_3","mat_3_4","mat_3_5","mat_3_6","mat_3_7"
+};
+#define STATE_KEY_COUNT ((int)(sizeof(STATE_KEYS)/sizeof(STATE_KEYS[0])))
+
+/* Extract the quoted string value for "key". Searches for the fully-quoted key
+ * ("osc_mix" never matches inside a longer key) and tolerates whitespace or
+ * newlines after the colon: Schwung's autosave re-stringifies the slot JSON
+ * pretty-printed ("key": "value"), so a strict "key":" search would miss and
+ * params would quietly fall back to defaults. Values are always emitted quoted
+ * by the state getter, so a single string extractor covers every param. */
+static int denis_json_get_str(const char *json, const char *key,
+                              char *out, int out_len) {
+    char search[48];
+    snprintf(search, sizeof(search), "\"%s\"", key);
+    const char *p = strstr(json, search);
+    if (!p) return -1;
+    p += strlen(search);
+    while (*p == ':' || *p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+    if (*p != '"') return -1;
+    p++;
+    const char *end = strchr(p, '"');
+    if (!end) return -1;
+    int len = (int)(end - p);
+    if (len >= out_len) len = out_len - 1;
+    memcpy(out, p, (size_t)len);
+    out[len] = '\0';
+    return 0;
+}
+
+static void set_param(void *instance, const char *key, const char *val);
+
+static void restore_state(void *instance, const char *json) {
+    char vb[64];
+    /* preset MUST be applied before the individual params it would overwrite */
+    if (denis_json_get_str(json, "preset", vb, sizeof(vb)) == 0)
+        set_param(instance, "preset", vb);
+    for (int i = 0; i < STATE_KEY_COUNT; i++) {
+        if (strcmp(STATE_KEYS[i], "preset") == 0) continue;  /* already applied */
+        if (denis_json_get_str(json, STATE_KEYS[i], vb, sizeof(vb)) == 0)
+            set_param(instance, STATE_KEYS[i], vb);
+    }
+}
+
 static void set_param(void *instance, const char *key, const char *val) {
     serge_instance_t *inst = (serge_instance_t *)instance;
     if (!inst || !key || !val) return;
     float f = (float)atof(val);
+
+    /* Bulk restore from Schwung's saved snapshot: hand each key to the
+     * ordinary per-key handlers below so their clamping and enum matching
+     * apply exactly as for a live knob turn. */
+    if (strcmp(key, "state") == 0) {
+        restore_state(instance, val);
+        return;
+    }
 
     /* Encoder params */
     if      (strcmp(key, "osc1_freq")      == 0) inst->enc_osc1_freq      = fmaxf(0, fminf(1, f));
@@ -1509,6 +1588,29 @@ static int get_param(void *instance, const char *key, char *buf, int buf_len) {
         if (len >= buf_len) return -1;
         memcpy(buf, hier, len + 1);
         return len;
+    }
+
+    /* ── state: full snapshot for Schwung autosave / set reload ── */
+    /* Every value is emitted as a quoted string (raw float text or the enum
+     * option name, built by calling this same get_param per key so the
+     * representation is identical to a live read) so it survives any
+     * re-serialization unchanged and feeds straight back into set_param. */
+    if (strcmp(key, "state") == 0) {
+        if (buf_len < 2) return -1;
+        int n = 0;
+        buf[n++] = '{';
+        for (int i = 0; i < STATE_KEY_COUNT; i++) {
+            char vb[48];
+            if (get_param(inst, STATE_KEYS[i], vb, sizeof(vb)) < 0) continue;
+            int w = snprintf(buf + n, (size_t)(buf_len - n), "%s\"%s\":\"%s\"",
+                             (n > 1) ? "," : "", STATE_KEYS[i], vb);
+            if (w < 0 || w >= buf_len - n) return -1;   /* would overflow */
+            n += w;
+        }
+        if (n + 1 >= buf_len) return -1;
+        buf[n++] = '}';
+        buf[n] = '\0';
+        return n;
     }
 
     /* Individual param getters */
